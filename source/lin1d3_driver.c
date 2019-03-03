@@ -8,18 +8,20 @@
 #include <string.h>
 #include <fsl_debug_console.h>
 
+/******************************************************************************
+ * Defines
+ *****************************************************************************/
+// define to size of elements
 #define master_stack_size_d	(256)
 #define master_task_priority (configMAX_PRIORITIES - 1)
 #define master_queue_size_d	(8)
-
 #define slave_stack_size_d	(256)
 #define slave_task_priority (configMAX_PRIORITIES - 1)
-
 #define size_of_uart_buffer	(10)
-
 #define size_of_lin_header_d (3)
 
-/*Static function prototypes */
+
+/*Static function prototypes  to task */
 static void master_task(void *pvParameters);
 static void slave_task(void *pvParameters);
 
@@ -107,6 +109,8 @@ static void master_task(void *pvParameters)
 	uint8_t  message_size = 0;
 	size_t n;
 	uint8_t  msg_idx;
+	/** agregamos la variable del cheksum  **/
+	uint16_t checksum = 0;
 
 	if(handle == NULL) {
 		vTaskSuspend(NULL);
@@ -148,6 +152,18 @@ static void master_task(void *pvParameters)
         	/* Put the ID into the header */
         	lin1p3_header[2] = ID<<2;
         	/* TODO: put the parity bits */
+        	// CALCULAMOS LA PARIDAD EN LOS BITS MEDIANTE LA ECUACION EN LA PRESENTACION
+        	if(((ID & ID5)>>5) ^ ((ID & ID4)>>4) ^ ((ID & ID3)>>3) ^ ((ID & ID1)>>1))
+            	lin1p3_header[2] |= (1 << 1);
+        	else
+        		lin1p3_header[2] &= ~(1 << 1);
+
+        	if(((ID & ID4)>>4) ^ ((ID & ID2)>>2) ^ ((ID & ID1)>>1) ^ (ID & ID0))
+        		lin1p3_header[2] |= 1;
+        	else
+        		lin1p3_header[2] &= ~(1);
+
+
         	/* Init the message recevie buffer */
         	memset(lin1p3_message, 0, size_of_uart_buffer);
         	/* Calc the message size */
@@ -168,9 +184,19 @@ static void master_task(void *pvParameters)
         	UART_RTOS_Receive(&(handle->uart_rtos_handle), lin1p3_message, message_size, &n);
 
         	/* TODO: Check the checksum */
+        	//Realizamos la suma de todos los datos del arreglo, guardandolo en el checsum
+        	for(uint8_t i=0; i < message_size-1 ; i++)
+        	{
+        		checksum += lin1p3_message[i];
+        	}
+        	// Realizamos el modulo tal y como lo especifica el protocolo
+        	checksum %= 256;
 
-        	/* Call the message callback */
-        	handle->config.messageTable[msg_idx].handler((void*)lin1p3_message);
+        	if(checksum == lin1p3_message[message_size-1])
+        	{
+        		/* Call the message callback */
+        		handle->config.messageTable[msg_idx].handler((void*)lin1p3_message);
+        	}
         }
     }
 }
@@ -184,6 +210,9 @@ static void slave_task(void *pvParameters)
 	uint8_t  message_size = 0;
 	size_t n;
 	uint8_t  msg_idx;
+	/** Agregamos las variables necesarias **/
+	uint8_t parity;
+	uint16_t checksum = 0;
 
 	if(handle == NULL) {
 		vTaskSuspend(NULL);
@@ -220,6 +249,22 @@ static void slave_task(void *pvParameters)
     	}
     	/* Get the message ID */
     	ID = (lin1p3_header[2] & 0xFC)>>2;
+		//sacamas el valor de la paridad
+    	parity = (((ID & ID5) >> 5) ^ ((ID & ID4) >> 4) ^ ((ID & ID3) >> 3)
+				^ ((ID & ID1) >> 1)) << 1;
+
+    	/* TODO: Check ID parity bits */
+    	// CALCULAMOS LA PARIDAD EN LOS BITS MEDIANTE LA ECUACION EN LA PRESENTACION
+    	if(((ID & ID4)>>4) ^ ((ID & ID2)>>2) ^ ((ID & ID1)>>1) ^ (ID & ID0))
+    		parity |= 1;
+    	else
+    		parity &= ~(1);
+
+		if((lin1p3_header[2] & 0x03) != parity)
+		{
+			continue;
+		}
+
     	/* If the header is correct, check if the message is in the table */
     	msg_idx = 0;
     	/*Look for the ID in the message table */
@@ -248,6 +293,15 @@ static void slave_task(void *pvParameters)
     		break;
     	}
     	/* TODO: Add the checksum to the message */
+
+    	for(uint8_t i=0; i<message_size; i++)
+    	{
+    		checksum += lin1p3_message[i];
+    	}
+
+    	checksum %= 256;
+    	lin1p3_message[message_size] = (uint8_t)checksum;
+
     	message_size+=1;
     	/* Send the message data */
     	UART_RTOS_Send(&(handle->uart_rtos_handle), (uint8_t *)lin1p3_message, message_size);

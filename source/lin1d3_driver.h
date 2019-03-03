@@ -32,6 +32,18 @@ typedef enum {
 #define message_size_2_bytes_d (0x01)
 #define message_size_4_bytes_d (0x02)
 #define message_size_8_bytes_d (0x03)
+
+/** define to calculate cheksum **/
+// odd parity
+#define ID5 0x20
+#define ID4 0x10
+#define ID3 0x08
+#define ID1 0x02
+// even parity
+#define ID2 0x04
+#define ID0 0x01
+
+
 /*
  * Function pointer type for the message handlers
  * */
