@@ -33,28 +33,27 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: Tarea-Practica-02-redes.axf
+all: Lin_freertos_uart.axf
 
 # Tool invocations
-Tarea-Practica-02-redes.axf: $(OBJS) $(USER_OBJS)
+Lin_freertos_uart.axf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU Linker'
-	arm-none-eabi-gcc -nostdlib -Xlinker -Map="Tarea-Practica-02-redes.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -T frdmk64f_freertos_uart_120918_Debug.ld -o "Tarea-Practica-02-redes.axf" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-none-eabi-gcc -nostdlib -Xlinker -Map="Lin_freertos_uart.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -T frdmk64f_freertos_uart_120918_Debug.ld -o "Lin_freertos_uart.axf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Tarea-Practica-02-redes.axf
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Lin_freertos_uart.axf
 	-@echo ' '
 
 post-build:
 	-@echo 'Performing post-build steps'
-	-arm-none-eabi-size "Tarea-Practica-02-redes.axf"; # arm-none-eabi-objcopy -v -O binary "Tarea-Practica-02-redes.axf" "Tarea-Practica-02-redes.bin" ; # checksum -p MK64FN1M0xxx12 -d "Tarea-Practica-02-redes.bin";
+	-arm-none-eabi-size "Lin_freertos_uart.axf"; # arm-none-eabi-objcopy -v -O binary "Lin_freertos_uart.axf" "Lin_freertos_uart.bin" ; # checksum -p MK64FN1M0xxx12 -d "Lin_freertos_uart.bin";
 	-@echo ' '
 
-.PHONY: all clean dependents
-.SECONDARY: post-build
+.PHONY: all clean dependents post-build
 
 -include ../makefile.targets

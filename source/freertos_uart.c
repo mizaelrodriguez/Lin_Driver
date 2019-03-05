@@ -77,7 +77,8 @@ uart_rtos_handle_t handle;
 struct _uart_handle t_handle;
 
 uart_rtos_config_t uart_config = {
-    .baudrate = 115200,
+    .baudrate = 9600,
+	.baudSynchBreak = 4800,
     .parity = kUART_ParityDisabled,
     .stopbits = kUART_OneStopBit,
     .buffer = background_buffer,

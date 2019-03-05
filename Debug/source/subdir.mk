@@ -4,27 +4,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../source/Lin_Driver.c \
 ../source/freertos_uart.c \
 ../source/lin1d3_driver.c \
 ../source/lin_driver_test_main.c \
-../source/main.c \
 ../source/semihost_hardfault.c 
 
 OBJS += \
-./source/Lin_Driver.o \
 ./source/freertos_uart.o \
 ./source/lin1d3_driver.o \
 ./source/lin_driver_test_main.o \
-./source/main.o \
 ./source/semihost_hardfault.o 
 
 C_DEPS += \
-./source/Lin_Driver.d \
 ./source/freertos_uart.d \
 ./source/lin1d3_driver.d \
 ./source/lin_driver_test_main.d \
-./source/main.d \
 ./source/semihost_hardfault.d 
 
 

@@ -61,6 +61,7 @@ typedef struct _uart_rtos_config
     UART_Type *base;                /*!< UART base address */
     uint32_t srcclk;                /*!< UART source clock in Hz*/
     uint32_t baudrate;              /*!< Desired communication speed */
+    uint32_t baudSynchBreak;
     uart_parity_mode_t parity;      /*!< Parity setting */
     uart_stop_bit_count_t stopbits; /*!< Number of stop bits to use */
     uint8_t *buffer;                /*!< Buffer for background reception */

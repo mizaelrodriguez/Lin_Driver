@@ -43,6 +43,10 @@ typedef enum {
 #define ID2 0x04
 #define ID0 0x01
 
+#define SYNCH  1
+#define HEADER 0
+#define MSG    0
+
 
 /*
  * Function pointer type for the message handlers
@@ -66,6 +70,7 @@ typedef struct {
 	lin1d3_nodeType_t type; /* type of LIN node */
 	UART_Type *uartBase;    /* UART base address */
 	uint32_t srcclk;		/* UART Clock */
+	uint32_t baudSynchBreak;/* LIN bitrate to set only for synch*/
 	uint32_t bitrate;		/* LIN bitrate to set */
 	lin1d3_messageConfig_t messageTable[lin1d3_max_supported_messages_per_node_cfg_d]; /* Table of supported IDs with its callbacks */
 }lin1d3_nodeConfig_t;
@@ -85,5 +90,6 @@ typedef struct {
 
 extern lin1d3_handle_t* lin1d3_InitNode(lin1d3_nodeConfig_t config);
 extern uint32_t lin1d3_masterSendMessage(lin1d3_handle_t* handle, uint8_t ID);
+void uart_init(lin1d3_handle_t* handle, uint8_t synch);
 
 #endif /* LIN1D3_DRIVER_H_ */

@@ -5,7 +5,7 @@
  * Generated linker script file for MK64FN1M0xxx12
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.23
- * MCUXpresso IDE v10.1.1 [Build 606] [2018-01-02]  on Mar 3, 2019 5:37:07 PM
+ * MCUXpresso IDE v10.2.1 [Build 795] [2018-07-25]  on 5/03/2019 03:44:55 PM
  */
 
 INCLUDE "frdmk64f_freertos_uart_120918_Debug_library.ld"
@@ -48,7 +48,6 @@ SECTIONS
 
         *(.after_vectors*)
 
-
         /* Kinetis Flash Configuration data */
         . = 0x400 ;
         PROVIDE(__FLASH_CONFIG_START__ = .) ;
@@ -57,14 +56,13 @@ SECTIONS
         ASSERT(!(__FLASH_CONFIG_START__ == __FLASH_CONFIG_END__), "Linker Flash Config Support Enabled, but no .FlashConfig section provided within application");
         /* End of Kinetis Flash Configuration data */
         
-
-    } >PROGRAM_FLASH
+    } > PROGRAM_FLASH
 
     .text : ALIGN(4)
     {
-        *(.text*)
-        *(.rodata .rodata.* .constdata .constdata.*)
-        . = ALIGN(4);
+       *(.text*)
+       *(.rodata .rodata.* .constdata .constdata.*)
+       . = ALIGN(4);
     } > PROGRAM_FLASH
     /*
      * for exception handling/unwind - some Newlib functions (in common
@@ -74,6 +72,7 @@ SECTIONS
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
     } > PROGRAM_FLASH
+
     __exidx_start = .;
 
     .ARM.exidx : ALIGN(4)
@@ -91,6 +90,7 @@ SECTIONS
         *(m_usb_bdt)
     } > SRAM_UPPER
     /* DATA section for SRAM_LOWER */
+
     .data_RAM2 : ALIGN(4)
     {
         FILL(0xff)
@@ -102,8 +102,8 @@ SECTIONS
         . = ALIGN(4) ;
         PROVIDE(__end_data_RAM2 = .) ;
      } > SRAM_LOWER AT>PROGRAM_FLASH
-
     /* DATA section for FLEX_RAM */
+
     .data_RAM3 : ALIGN(4)
     {
         FILL(0xff)
@@ -115,7 +115,6 @@ SECTIONS
         . = ALIGN(4) ;
         PROVIDE(__end_data_RAM3 = .) ;
      } > FLEX_RAM AT>PROGRAM_FLASH
-
     /* MAIN DATA SECTION */
     .uninit_RESERVED : ALIGN(4)
     {
@@ -123,6 +122,7 @@ SECTIONS
         . = ALIGN(4) ;
         _end_uninit_RESERVED = .;
     } > SRAM_UPPER
+
     /* Main DATA section (SRAM_UPPER) */
     .data : ALIGN(4)
     {
@@ -134,6 +134,7 @@ SECTIONS
        . = ALIGN(4) ;
        _edata = . ;
     } > SRAM_UPPER AT>PROGRAM_FLASH
+
     /* BSS section for SRAM_LOWER */
     .bss_RAM2 : ALIGN(4)
     {
@@ -143,6 +144,7 @@ SECTIONS
        . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
        PROVIDE(__end_bss_RAM2 = .) ;
     } > SRAM_LOWER 
+
     /* BSS section for FLEX_RAM */
     .bss_RAM3 : ALIGN(4)
     {
@@ -152,6 +154,7 @@ SECTIONS
        . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
        PROVIDE(__end_bss_RAM3 = .) ;
     } > FLEX_RAM 
+
     /* MAIN BSS SECTION */
     .bss : ALIGN(4)
     {
@@ -162,6 +165,7 @@ SECTIONS
         _ebss = .;
         PROVIDE(end = .);
     } > SRAM_UPPER
+
     /* NOINIT section for SRAM_LOWER */
     .noinit_RAM2 (NOLOAD) : ALIGN(4)
     {
@@ -169,6 +173,7 @@ SECTIONS
        *(.noinit.$SRAM_LOWER*)
        . = ALIGN(4) ;
     } > SRAM_LOWER 
+
     /* NOINIT section for FLEX_RAM */
     .noinit_RAM3 (NOLOAD) : ALIGN(4)
     {
@@ -176,6 +181,7 @@ SECTIONS
        *(.noinit.$FLEX_RAM*)
        . = ALIGN(4) ;
     } > FLEX_RAM 
+
     /* DEFAULT NOINIT SECTION */
     .noinit (NOLOAD): ALIGN(4)
     {

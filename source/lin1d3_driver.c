@@ -104,10 +104,11 @@ static void master_task(void *pvParameters)
 {
 	lin1d3_handle_t* handle = (lin1d3_handle_t*)pvParameters;
 	uint8_t  ID;
-	uint8_t  lin1p3_header[] = {0x00, 0x55, 0x00};
+	uint8_t  lin1p3_synchbreak[] = {0x00};
+	uint8_t  lin1p3_header[]     = {0x55, 0x00};
 	uint8_t  lin1p3_message[size_of_uart_buffer];
 	uint8_t  message_size = 0;
-	size_t n;
+	size_t   n;
 	uint8_t  msg_idx;
 	/** agregamos la variable del cheksum  **/
 	uint16_t checksum = 0;
@@ -116,22 +117,24 @@ static void master_task(void *pvParameters)
 		vTaskSuspend(NULL);
 	}
 
-	/* Init/Configure the UART */
-	handle->uart_config.base = handle->config.uartBase;
-	handle->uart_config.srcclk = handle->config.srcclk;
-	handle->uart_config.baudrate = handle->config.bitrate;
-	handle->uart_config.parity = kUART_ParityDisabled;
-	handle->uart_config.stopbits = kUART_OneStopBit;
-	handle->uart_config.buffer = pvPortMalloc(size_of_uart_buffer);
-	handle->uart_config.buffer_size = size_of_uart_buffer;
-	if(handle->uart_config.buffer == NULL){
-		vTaskSuspend(NULL);
-	}
+	uart_init(handle,HEADER);
 
-    if (0 > UART_RTOS_Init(&(handle->uart_rtos_handle), &(handle->uart_handle), &(handle->uart_config)))
-    {
-        vTaskSuspend(NULL);
-    }
+//	/* Init/Configure the UART */
+//	handle->uart_config.base = handle->config.uartBase;
+//	handle->uart_config.srcclk = handle->config.srcclk;
+//	handle->uart_config.baudrate = handle->config.bitrate;
+//	handle->uart_config.parity = kUART_ParityDisabled;
+//	handle->uart_config.stopbits = kUART_OneStopBit;
+//	handle->uart_config.buffer = pvPortMalloc(size_of_uart_buffer);
+//	handle->uart_config.buffer_size = size_of_uart_buffer;
+//	if(handle->uart_config.buffer == NULL){
+//		vTaskSuspend(NULL);
+//	}
+//
+//    if (0 > UART_RTOS_Init(&(handle->uart_rtos_handle), &(handle->uart_handle), &(handle->uart_config)))
+//    {
+//        vTaskSuspend(NULL);
+//    }
 
     while(1) {
     	/* Wait for messages on the Queue */
@@ -150,7 +153,7 @@ static void master_task(void *pvParameters)
         	if(msg_idx == lin1d3_max_supported_messages_per_node_cfg_d) continue;
 
         	/* Put the ID into the header */
-        	lin1p3_header[2] = ID<<2;
+        	lin1p3_header[1] = ID<<2;
         	/* TODO: put the parity bits */
         	// CALCULAMOS LA PARIDAD EN LOS BITS MEDIANTE LA ECUACION EN LA PRESENTACION
         	if(((ID & ID5)>>5) ^ ((ID & ID4)>>4) ^ ((ID & ID3)>>3) ^ ((ID & ID1)>>1))
@@ -179,7 +182,10 @@ static void master_task(void *pvParameters)
         	}
         	message_size+=1;
         	/* Send the header */
-        	UART_RTOS_Send(&(handle->uart_rtos_handle), (uint8_t *)lin1p3_header, 3);
+        	uart_init(handle,SYNCH);
+        	UART_RTOS_Send(&(handle->uart_rtos_handle), (uint8_t *)lin1p3_synchbreak, 1);
+        	uart_init(handle,HEADER);
+        	UART_RTOS_Send(&(handle->uart_rtos_handle), (uint8_t *)lin1p3_header, 2);
         	/* Wait for the response */
         	UART_RTOS_Receive(&(handle->uart_rtos_handle), lin1p3_message, message_size, &n);
 
@@ -218,13 +224,15 @@ static void slave_task(void *pvParameters)
 		vTaskSuspend(NULL);
 	}
 
+
+
 	/* Init/Configure the UART */
-	handle->uart_config.base = handle->config.uartBase;
-	handle->uart_config.srcclk = handle->config.srcclk;
+	handle->uart_config.base     = handle->config.uartBase;
+	handle->uart_config.srcclk   = handle->config.srcclk;
 	handle->uart_config.baudrate = handle->config.bitrate;
-	handle->uart_config.parity = kUART_ParityDisabled;
+	handle->uart_config.parity   = kUART_ParityDisabled;
 	handle->uart_config.stopbits = kUART_OneStopBit;
-	handle->uart_config.buffer = pvPortMalloc(size_of_uart_buffer);
+	handle->uart_config.buffer   = pvPortMalloc(size_of_uart_buffer);
 	handle->uart_config.buffer_size = size_of_uart_buffer;
 	if(handle->uart_config.buffer == NULL){
 		vTaskSuspend(NULL);
@@ -241,6 +249,9 @@ static void slave_task(void *pvParameters)
     	/* Wait for header on the UART */
     	UART_RTOS_Receive(&(handle->uart_rtos_handle), lin1p3_header, size_of_lin_header_d, &n);
     	/* Check header */
+    	if (lin1p3_header[2] != 20 )
+    		lin1p3_header[2]+=1;
+
     	if((lin1p3_header[0] != 0x00) &&
     	   (lin1p3_header[1] != 0x55)) {
     		/* TODO: Check ID parity bits */
@@ -305,5 +316,29 @@ static void slave_task(void *pvParameters)
     	message_size+=1;
     	/* Send the message data */
     	UART_RTOS_Send(&(handle->uart_rtos_handle), (uint8_t *)lin1p3_message, message_size);
+    }
+}
+
+void uart_init(lin1d3_handle_t* handle, uint8_t synch){
+/* Init/Configure the UART */
+	handle->uart_config.base = handle->config.uartBase;
+	handle->uart_config.srcclk = handle->config.srcclk;
+	if (SYNCH == synch ){
+		handle->uart_config.baudrate = handle->config.baudSynchBreak;
+	}
+	else{
+		handle->uart_config.baudrate = handle->config.bitrate;
+	}
+	handle->uart_config.parity = kUART_ParityDisabled;
+	handle->uart_config.stopbits = kUART_OneStopBit;
+	handle->uart_config.buffer = pvPortMalloc(size_of_uart_buffer);
+	handle->uart_config.buffer_size = size_of_uart_buffer;
+	if(handle->uart_config.buffer == NULL){
+		vTaskSuspend(NULL);
+	}
+
+    if (0 > UART_RTOS_Init(&(handle->uart_rtos_handle), &(handle->uart_handle), &(handle->uart_config)))
+    {
+        vTaskSuspend(NULL);
     }
 }
